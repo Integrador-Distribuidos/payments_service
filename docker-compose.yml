@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: bash -c "sleep 5 && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 payments.wsgi:application"
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
