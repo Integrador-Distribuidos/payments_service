@@ -53,8 +53,8 @@ class Invoice(models.Model):
         verbose_name=_("Status"),
     )
 
-    user_id = models.UUIDField(verbose_name="ID do Usuário")
+    user_id = models.IntegerField(verbose_name="ID do Usuário")
 
-    id_order = models.UUIDField(
+    id_order = models.IntegerField(
         verbose_name="ID do Pedido", null=True, blank=True
     )
