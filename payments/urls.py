@@ -18,10 +18,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from transactions.views import SalesReportView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('transactions.urls')),
+    path('payments/invoices/sales_report/', SalesReportView.as_view(), name='sales_report'),
 ]
 
 if settings.DEBUG:
