@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   web:
     build: .
@@ -15,8 +17,10 @@ services:
     image: postgres:16
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    env_file:
-      - .env
+    environment:
+      POSTGRES_DB: pagamentos
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
     ports:
       - "5432:5432"
 
