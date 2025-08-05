@@ -7,12 +7,14 @@ from datetime import datetime, timedelta
 from .models import Invoice
 from rest_framework.permissions import AllowAny
 
+
 class SalesReportView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
+        store_id = request.GET.get('store_id') 
 
         invoices = Invoice.objects.filter(status="completed")
 
@@ -22,12 +24,15 @@ class SalesReportView(APIView):
                 invoices = invoices.filter(time__gte=start_date_obj)
             if end_date:
                 end_date_obj = timezone.make_aware(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1))
-                invoices = invoices.filter(time__lt=end_date_obj) 
+                invoices = invoices.filter(time__lt=end_date_obj)
         except ValueError:
             return Response(
                 {"error": "Formato da data inválido. Use YYYY-MM-DD."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        if store_id:
+            invoices = invoices.filter(store_id=store_id)
 
         total_vendas = invoices.count()
         valor_total = invoices.aggregate(total=Sum("value"))["total"] or 0
