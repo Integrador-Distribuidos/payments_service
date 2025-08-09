@@ -58,3 +58,7 @@ class Invoice(models.Model):
     id_order = models.IntegerField(
         verbose_name="ID do Pedido", null=True, blank=True
     )
+
+    user_cpf = models.CharField(
+        verbose_name="CPF do Usuário", max_length=11, null=True, blank=True
+    )

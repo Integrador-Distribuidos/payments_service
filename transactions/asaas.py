@@ -2,11 +2,13 @@ from functools import partialmethod
 
 import requests
 from requests import HTTPError
-
+from django.contrib.auth import get_user_model
 from .api.serializers import AsaasCustomerSerializer
 import os
 from dotenv import load_dotenv
-
+import json
+import re
+User = get_user_model()
 
 load_dotenv()
 
@@ -42,36 +44,52 @@ class AssasPaymentClient:
         except HTTPError:
             raise HTTPError(
                 self.error_msgs.get(response.status_code, "Erro desconhecido"),
-                response=self,
+                response=response,
             )
-
         return response.json()
 
     _api_get = partialmethod(_request, "get")
     _api_put = partialmethod(_request, "put")
     _api_post = partialmethod(_request, "post")
 
-    def create_or_update_customer(self, user_id, **kwargs):
-        customer_id = self._get_customer_id(user_id.cpf)
-        customer_data = AsaasCustomerSerializer(user_id).data
-        if customer_id:
-            response = self._update_customer(customer_id, customer_data)
-            return response
-        else:
-            response = self._create_customer(customer_data)
-            return response
+    def create_or_update_customer(self, invoice, **kwargs):
+        user_cpf = re.sub(r'\D', '', str(invoice.user_cpf))
 
-    def _get_customer_id(self, cpf):
-        response = self._api_get(f"/customers?cpfCnpj={cpf}")
-        if response["totalCount"] > 0:
-            customer_id = response["data"][0]["id"]
-            return customer_id
+        try:
+            user = User.objects.get(id=invoice.user_id)
+            name = user.get_full_name() or str(user)
+            email = getattr(user, "email", None)
+        except User.DoesNotExist:
+            name = f"Cliente {invoice.user_id}"
+            email = None
+
+        customer_payload = {
+            "name": name,
+            "cpfCnpj": user_cpf,
+            "email": email,
+            "externalReference": str(invoice.user_id),
+        }
+
+        customer_payload = {k: v for k, v in customer_payload.items() if v is not None}
+
+        customer_id = self._get_customer_id(user_cpf)
+        if customer_id:
+            return self._update_customer(customer_id, customer_payload)
+        else:
+            return self._create_customer(customer_payload)
+
+
+    def _get_customer_id(self, user_cpf):
+        response = self._api_get(f"/customers?cpfCnpj={user_cpf}")
+        if response.get("totalCount", 0) > 0:
+            return response["data"][0]["id"]
         return None
 
     def _update_customer(self, customer_id, data):
         return self._api_put(f"/customers/{customer_id}", json=data)
 
     def _create_customer(self, data):
+        print(">>> Enviando para Asaas:", json.dumps(data, ensure_ascii=False, indent=2))
         return self._api_post("/customers", json=data)
 
     def send_payment_request(self, data):
@@ -79,6 +97,6 @@ class AssasPaymentClient:
 
     def get_qr_code(self, id):
         return self._api_get(f"/payments/{id}/pixQrCode")
-    
+
     def send_withdraw_request(self, data):
         return self._api_post("/transfers", json=data)

@@ -15,11 +15,11 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "time",
             "user_id",
             "id_order",
+            "user_cpf",
         ]
 
     external_id = serializers.CharField(read_only=True)
     link_payment = serializers.CharField(read_only=True)
-
 
 class CreateInvoiceSerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -40,12 +40,12 @@ class CPFField(serializers.Field):
     def to_representation(self, value):
         return str(value)
 
-
 class AsaasCustomerSerializer(serializers.Serializer):
     externalReference = serializers.CharField(source="id")
-    name = serializers.SerializerMethodField()
+    """name = serializers.SerializerMethodField()
     cpfCnpj = CPFField(source="cpf")
-    email = serializers.EmailField()
+    email = serializers.EmailField()"""
 
-    def get_name(self, obj):
+    """def get_name(self, obj):
         return obj.get_full_name()
+"""

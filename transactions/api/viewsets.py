@@ -15,7 +15,6 @@ from ..asaas import AssasPaymentClient
 
 
 class InvoiceViewSet(ModelViewSet):
-    #permission_classes = [IsAuthenticated]
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
 
@@ -33,20 +32,17 @@ class InvoiceViewSet(ModelViewSet):
 
 
 class InvoicesAPIView(APIView):
-    #permission_classes = [IsAuthenticated]
 
     @extend_schema(request=CreateInvoiceSerializer)
     def post(self, request):
         serializer = CreateInvoiceSerializer(data=request.data)
         if serializer.is_valid():
             invoice_id = serializer.validated_data["id"]
-            invoice = Invoice.objects.get(id=invoice_id)  # Utilize o id do invoice aqui
+            invoice = Invoice.objects.get(id=invoice_id)
 
             client = AssasPaymentClient()
 
-            # Você deve buscar o CPF do usuário via API externa
-            # Aqui estamos considerando que o invoice já tem o CPF
-            customer = client.create_or_update_customer(invoice.user_id)
+            customer = client.create_or_update_customer(invoice)
             data = self.prepare_payment_data(invoice, customer)
             response = self.send_payment_request(data)
 
@@ -69,8 +65,8 @@ class InvoicesAPIView(APIView):
             "value": float(invoice.value),
             "dueDate": end_date_str,
             "description": f"Pagamento do pedido #{invoice.id_order}",
-            "externalReference": str(invoice.id),  # Passando o id corretamente
-            "cpfCnpj": str(invoice.user_id.cpf),
+            "externalReference": str(invoice.id),
+            "cpfCnpj": str(invoice.user_cpf),
         }
         return data
 
@@ -86,16 +82,14 @@ class InvoicesAPIView(APIView):
 
 
 class WithdrawView(APIView):
-    permission_classes = [IsAuthenticated]
 
     @extend_schema(request=WithDrawSerializer)
     def post(self, request):
         serializer = WithDrawSerializer(data=request.data)
         if serializer.is_valid():
             value = serializer.validated_data["value"]
-            user_cpf = request.user.cpf  # CPF deve estar disponível no token do usuário autenticado
+            user_cpf = request.user.cpf
 
-            # Você pode buscar saldo via API, caso não esteja no token
             if request.user.balance < value:
                 return Response(
                     {"error": "Saldo insuficiente para saque"},
@@ -106,7 +100,6 @@ class WithdrawView(APIView):
             response = self.send_payment_request(data)
 
             if response:
-                # Você pode disparar uma requisição para o microsserviço de usuários para atualizar saldo
                 return Response(response, status=status.HTTP_200_OK)
 
         return Response(
@@ -134,7 +127,7 @@ class QRCodeView(APIView):
         serializer = CreateInvoiceSerializer(data=request.data)
         if serializer.is_valid():
             invoice_id = serializer.validated_data["id"]
-            invoice = Invoice.objects.get(id=invoice_id)  # Certificando que o id é usado aqui
+            invoice = Invoice.objects.get(id=invoice_id)
 
             client = AssasPaymentClient()
             response = client.get_qr_code(invoice.external_id)
@@ -154,6 +147,5 @@ class PaymentWebHookview(APIView):
         data = json.loads(request.body)
         print(data)
         if data:
-            # Aqui você pode processar o callback do Asaas, ex: alterar status da fatura
             return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
