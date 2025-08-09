@@ -51,9 +51,9 @@ class AssasPaymentClient:
     _api_put = partialmethod(_request, "put")
     _api_post = partialmethod(_request, "post")
 
-    def create_or_update_customer(self, user, **kwargs):
-        customer_id = self._get_customer_id(user.cpf)
-        customer_data = AsaasCustomerSerializer(user).data
+    def create_or_update_customer(self, user_id, **kwargs):
+        customer_id = self._get_customer_id(user_id.cpf)
+        customer_data = AsaasCustomerSerializer(user_id).data
         if customer_id:
             response = self._update_customer(customer_id, customer_data)
             return response

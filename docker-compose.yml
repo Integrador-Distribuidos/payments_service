@@ -3,7 +3,7 @@ version: '3.8'
 services:
   web:
     build: .
-    command: bash -c "sleep 15 && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 payments.wsgi:application"
+    command: bash -c "sleep 15 && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
     ports:
@@ -12,6 +12,8 @@ services:
       - .env
     depends_on:
       - db
+    networks:
+      - shared_network  # Adiciona a rede compartilhada
 
   db:
     image: postgres:16
@@ -23,6 +25,12 @@ services:
       POSTGRES_PASSWORD: root
     ports:
       - "5435:5432"
+    networks:
+      - shared_network  # Adiciona a rede compartilhada
 
 volumes:
   postgres_data:
+
+networks:
+  shared_network:
+    driver: bridge

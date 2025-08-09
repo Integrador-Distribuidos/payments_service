@@ -33,7 +33,7 @@ class CreateInvoiceSerializer(serializers.Serializer):
 
 
 class WithDrawSerializer(serializers.Serializer):
-    value = serializers.FloatField(min_value=0.01)
+    value = serializers.FloatField()
 
 
 class CPFField(serializers.Field):
@@ -48,4 +48,4 @@ class AsaasCustomerSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
     def get_name(self, obj):
-        return obj.get_full_name() if hasattr(obj, "get_full_name") else f"{obj.get('first_name', '')} {obj.get('last_name', '')}"
+        return obj.get_full_name()

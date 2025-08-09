@@ -26,7 +26,8 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'corsheaders',
-
+    'drf_spectacular',
+    'drf_spectacular_sidecar',
     'transactions',
 ]
 
@@ -105,3 +106,17 @@ CORS_ALLOWED_ORIGINS = [
 
 # Se estiver usando cookies/sessões com frontend (não é obrigatório):
 # CORS_ALLOW_CREDENTIALS = True
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API de Pagamentos',
+    'DESCRIPTION': 'Documentação da API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_DIST': 'SIDECAR',
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+}

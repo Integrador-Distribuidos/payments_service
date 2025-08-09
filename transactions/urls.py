@@ -16,9 +16,9 @@ router.register('invoices', InvoiceViewSet, basename='invoices')
 urlpatterns = [
     path('', include(router.urls)),
 
-    path('invoices/create/', InvoicesAPIView.as_view(), name='create-invoice'),
-    path('invoices/withdraw/', WithdrawView.as_view(), name='withdraw'),
-    path('invoices/qr-code/', QRCodeView.as_view(), name='qr-code'),
-    path('invoices/webhook/', PaymentWebHookview.as_view(), name='webhook'),
+    path('transactions/process_payment', InvoicesAPIView.as_view(), name='create-invoice'),
+    path('transactions/withdraw', WithdrawView.as_view(), name='withdraw'),
+    path('transactions/get_qr_code', QRCodeView.as_view(), name='qr-code'),
+    path('transactions/payment_webhook', PaymentWebHookview.as_view(), name='webhook'),
     path('invoices/sales_report/', SalesReportView.as_view(), name='sales-report'),
 ]

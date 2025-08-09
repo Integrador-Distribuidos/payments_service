@@ -21,11 +21,11 @@ class InvoiceViewSet(ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def get_invoice_by_order_id(self, request):
-        order_id = request.query_params.get('id')
-        if not order_id:
+        id = request.query_params.get('id')
+        if not id:
             return Response({"error": "Parâmetro 'id' é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
 
-        invoice = Invoice.objects.filter(order_id=order_id).first()
+        invoice = Invoice.objects.filter(id_order=id).first()
         if invoice:
             serializer = self.get_serializer(invoice)
             return Response(serializer.data)
@@ -40,18 +40,13 @@ class InvoicesAPIView(APIView):
         serializer = CreateInvoiceSerializer(data=request.data)
         if serializer.is_valid():
             invoice_id = serializer.validated_data["id"]
-            invoice = Invoice.objects.get(id=invoice_id)
+            invoice = Invoice.objects.get(id=invoice_id)  # Utilize o id do invoice aqui
 
             client = AssasPaymentClient()
 
             # Você deve buscar o CPF do usuário via API externa
             # Aqui estamos considerando que o invoice já tem o CPF
-            customer = client.create_or_update_customer({
-                "name": invoice.user_name,
-                "email": invoice.user_email,
-                "cpfCnpj": invoice.user_cpf,
-            })
-
+            customer = client.create_or_update_customer(invoice.user_id)
             data = self.prepare_payment_data(invoice, customer)
             response = self.send_payment_request(data)
 
@@ -66,20 +61,23 @@ class InvoicesAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def prepare_payment_data(self, invoice, customer):
-        due_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        return {
+        end_date = datetime.now() + timedelta(days=1)
+        end_date_str = end_date.strftime("%Y-%m-%d")
+        data = {
             "customer": customer.get("id"),
             "billingType": invoice.payment_type,
             "value": float(invoice.value),
-            "dueDate": due_date,
-            "description": f"Pagamento do pedido #{invoice.order_id}",
-            "externalReference": str(invoice.id),
-            "cpfCnpj": str(invoice.user_cpf),
+            "dueDate": end_date_str,
+            "description": f"Pagamento do pedido #{invoice.id_order}",
+            "externalReference": str(invoice.id),  # Passando o id corretamente
+            "cpfCnpj": str(invoice.user_id.cpf),
         }
+        return data
 
     def send_payment_request(self, data):
         client = AssasPaymentClient()
-        return client.send_payment_request(data)
+        response = client.send_payment_request(data)
+        return response
 
     def update_invoice(self, invoice, result):
         invoice.link_payment = result.get("invoiceUrl", "")
@@ -136,7 +134,7 @@ class QRCodeView(APIView):
         serializer = CreateInvoiceSerializer(data=request.data)
         if serializer.is_valid():
             invoice_id = serializer.validated_data["id"]
-            invoice = Invoice.objects.get(id=invoice_id)
+            invoice = Invoice.objects.get(id=invoice_id)  # Certificando que o id é usado aqui
 
             client = AssasPaymentClient()
             response = client.get_qr_code(invoice.external_id)

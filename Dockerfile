@@ -20,6 +20,6 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copia o projeto para o container
 COPY . .
-
+RUN python manage.py collectstatic --noinput
 # Comando padrão (pode ser sobrescrito no docker-compose)
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "payments.wsgi:application"]
