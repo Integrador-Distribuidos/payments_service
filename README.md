@@ -38,7 +38,8 @@ docker-compose up --build -d
 
 ### 4. Crie e configure o arquivo ```.env```:
 
-O arquivo ```.env``` é onde você configurará as variáveis de ambiente necessárias para o funcionamento da aplicação, como as credenciais do banco de dados e a chave da API do **Asaas**.
+O arquivo ```.env``` é onde você configurará as variáveis de ambiente necessárias para o funcionamento da aplicação, como as credenciais do banco de dados e a chave da API do **Asaas**(colocar a chave do asaas entre aspas simples ').
+
 ```bash 
 # Database
 POSTGRES_DB=pagamentos
@@ -51,7 +52,7 @@ POSTGRES_PORT=5432
 DATABASE_URL=postgres://postgres:root@db:5432/pagamentos
 
 # Asaas
-ASAAS_API_KEY="Sua-chave-API-aqui"
+ASAAS_API_KEY='Sua-chave-API-aqui'
 ```
 
 - ```POSTGRES_DB```: Nome do banco de dados (exemplo: pagamentos).
