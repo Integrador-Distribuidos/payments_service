@@ -1,0 +1,100 @@
+name: CI/CD Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Check docker and compose versions
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Criar arquivo .env com variáveis de ambiente
+        run: |
+          cat > .env << EOF
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
+          POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          ASAAS_API_KEY=${{ secrets.ASAAS_API_KEY }}
+          SECRET_KEY=${{ secrets.SECRET_KEY }}
+          RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }}
+          EOF
+      - name: Build and start containers
+        run: |
+          docker compose -f docker-compose.local.yml up -d --build
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Wait for API to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8002/admin; then
+              echo "API is up"
+              exit 0
+            fi
+            echo "Waiting for API..."
+            sleep 5
+          done
+          echo "API did not become ready in time"
+          exit 1
+
+      - name: Run tests
+        run: |
+          pytest -v
+        continue-on-error: true
+
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.PAYMENTS_SERVER_IP }}
+          username: ${{ secrets.PAYMENTS_SERVER_USER }}
+          key: ${{ secrets.PAYMENTS_SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            if [ ! -d ~/payments_service ]; then
+              git clone https://github.com/Integrador-Distribuidos/payments_service.git ~/payments_service
+              cd ~/payments_service
+              cat > .env << EOF
+              # Database
+              POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+              POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
+              POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
+
+              # Defina a URL do banco de dados usando as variaveis acima
+              DATABASE_URL=${{ secrets.DATABASE_URL }}
+
+              # Asaas
+              ASAAS_API_KEY=${{ secrets.ASAAS_API_KEY }}
+
+              # Django usuarios
+              SECRET_KEY=${{ secrets.SECRET_KEY }}
+
+              RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }}
+              EOF
+
+            else
+              cd ~/payments_service
+              git pull origin main
+            fi
+            sudo docker-compose up --build -d
+            sudo systemctl restart nginx
