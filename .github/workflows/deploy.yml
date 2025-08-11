@@ -35,7 +35,7 @@ jobs:
           EOF
       - name: Build and start containers
         run: |
-          docker compose -f docker-compose.local.yml up -d --build
+          docker compose up -d --build
 
       - name: Install dependencies
         run: |
