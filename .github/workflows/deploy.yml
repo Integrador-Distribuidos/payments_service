@@ -69,32 +69,7 @@ jobs:
           key: ${{ secrets.PAYMENTS_SERVER_SSH_KEY }}
           port: 22
           script: |
-            if [ ! -d ~/payments_service ]; then
-              git clone https://github.com/Integrador-Distribuidos/payments_service.git ~/payments_service
-              cd ~/payments_service
-              cat > .env << EOF
-              # Database
-              POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-              POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
-              POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
-
-              # Defina a URL do banco de dados usando as variaveis acima
-              DATABASE_URL=${{ secrets.DATABASE_URL }}
-
-              # Asaas
-              ASAAS_API_KEY=${{ secrets.ASAAS_API_KEY }}
-
-              # Django usuarios
-              SECRET_KEY=${{ secrets.SECRET_KEY }}
-
-              RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }}
-              EOF
-
-            else
-              cd ~/payments_service
-              git pull origin main
-            fi
+            cd ~/payments_service
+            git pull origin main
             sudo docker-compose up --build -d
             sudo systemctl restart nginx
