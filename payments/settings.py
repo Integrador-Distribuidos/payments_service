@@ -17,7 +17,7 @@ ALLOWED_HOSTS = [
     "integrador-distribuidos.github.io",
     "stock2sell.shop",
     "localhost",
-    "https://stock2sell.vercel.app/",
+    "stock2sell.vercel.app",
 ]
 
 
@@ -112,7 +112,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://integrador-distribuidos.github.io",
     "https://stock2sell.shop",
     "http://stock2sell.shop",
-    "https://stock2sell.vercel.app/",
+    "https://stock2sell.vercel.app",
 ]
 
 # Se estiver usando cookies/sessões com frontend (não é obrigatório):
