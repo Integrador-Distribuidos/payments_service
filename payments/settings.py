@@ -18,6 +18,7 @@ ALLOWED_HOSTS = [
     "stock2sell.shop",
     "localhost",
     "stock2sell.vercel.app",
+    "177.71.182.162",
 ]
 
 
@@ -113,6 +114,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://stock2sell.shop",
     "http://stock2sell.shop",
     "https://stock2sell.vercel.app",
+    "http://177.71.182.162:8002"
 ]
 
 # Se estiver usando cookies/sessões com frontend (não é obrigatório):
