@@ -12,7 +12,12 @@ if READ_DOT_ENV_FILE:
 
 SECRET_KEY = 'django-insecure-bm$%23m(w^-5(x)(lxkyw*559pni@$c4o2i%xs!xc#ml1*=-cg'
 DEBUG = True
-ALLOWED_HOSTS = ["server-payments.stock2sell.shop"]
+ALLOWED_HOSTS = [
+    "server-payments.stock2sell.shop",
+    "integrador-distribuidos.github.io",
+    "stock2sell.shop",
+    "localhost"
+]
 
 
 INSTALLED_APPS = [
@@ -103,6 +108,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://server-payments.stock2sell.shop",
+    "https://integrador-distribuidos.github.io",
+    "https://stock2sell.shop",
+    "http://stock2sell.shop"
 ]
 
 # Se estiver usando cookies/sessões com frontend (não é obrigatório):
