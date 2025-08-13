@@ -8,16 +8,55 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from django.db.models import Q
-
 from transactions.models import Invoice
 from .serializers import CreateInvoiceSerializer, WithDrawSerializer, InvoiceSerializer
 from ..asaas import AssasPaymentClient
-
+from .messaging.publisher import publish_order
+import asyncio
 
 class InvoiceViewSet(ModelViewSet):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
 
+    def partial_update(self, request, *args, **kwargs):
+        invoice_id = kwargs.get('pk')
+
+        print("\n--- PATCH INVOICE ---")
+        print(f"ID da fatura: {invoice_id}")
+        print(f"Corpo recebido: {request.data}")
+
+        # Executa a atualização via DRF normalmente
+        response = super().partial_update(request, *args, **kwargs)
+
+        # Após atualizar, busca a fatura atualizada no banco
+        try:
+            invoice = Invoice.objects.get(pk=invoice_id)
+        except Invoice.DoesNotExist:
+            print(f"Invoice {invoice_id} não encontrada após atualização")
+            return response
+
+        # Só dispara evento se status for 'completed'
+        if invoice.status == "completed":
+            # Prepara os dados para enviar à fila
+            message_data = {
+                "invoice_id": invoice.id,
+                "order_id": invoice.id_order,
+                "status": invoice.status,
+                "value": str(invoice.value),  # Decimal para string para JSON
+                "user_id": invoice.user_id,
+                "user_cpf": invoice.user_cpf,
+                "payment_type": invoice.payment_type,
+                "external_id": invoice.external_id,
+            }
+            #Envio de Mensagem via RabbitMQ
+            asyncio.run(publish_order(message_data))
+            print(f"Evento enviado para mensageria: {message_data}")
+        else:
+            print(f"Status da fatura {invoice.status}, evento não enviado.")
+
+        print("----------------------\n")
+        return response
+    
     @action(detail=False, methods=['get'])
     def get_invoice_by_order_id(self, request):
         id = request.query_params.get('id')

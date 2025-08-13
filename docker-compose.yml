@@ -14,6 +14,7 @@ services:
       - db
     networks:
       - shared_network  # Adiciona a rede compartilhada
+      - my_shared_network
 
   db:
     image: postgres:16
@@ -34,3 +35,5 @@ volumes:
 networks:
   shared_network:
     driver: bridge
+  my_shared_network:
+    external: true
